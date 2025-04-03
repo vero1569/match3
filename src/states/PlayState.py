@@ -90,16 +90,9 @@ class PlayState(BaseState):
     def render(self, surface: pygame.Surface) -> None:
         self.board.render(surface)
 
-        # Renderizar el tile que se está arrastrando al final
         if self.dragging and self.dragged_tile:
             pos_x = self.dragged_tile.x + self.drag_offset_x
             pos_y = self.dragged_tile.y + self.drag_offset_y
-            # self.dragged_tile.render_at(surface, pos_x, pos_y)
-
-        if self.highlighted_tile:
-            x = self.highlighted_j1 * settings.TILE_SIZE + self.board.x
-            y = self.highlighted_i1 * settings.TILE_SIZE + self.board.y
-            # surface.blit(self.tile_alpha_surface, (x, y))
 
         surface.blit(self.text_alpha_surface, (16, 16))
         render_text(
@@ -144,21 +137,36 @@ class PlayState(BaseState):
             return
 
         if input_id == "click" and input_data.pressed:
+
+            # Se obtiene la posicion del raton y la convierte en la posicion relativa del tablero
             pos_x, pos_y = input_data.position
             pos_x = pos_x * settings.VIRTUAL_WIDTH // settings.WINDOW_WIDTH
             pos_y = pos_y * settings.VIRTUAL_HEIGHT // settings.WINDOW_HEIGHT
+
+            # la "i" y "j" sera las posiciones relativas del tablero , se restan con self.board.xy porque self.board.xy es la posicion del tablero en la pantalla
+            # y se divide por el tama;o del tile para obtener la posicion relativa del tile seleccionado, obteniendo asi la posicion "i" y "j" del tile seleccionado
             i = (pos_y - self.board.y) // settings.TILE_SIZE
             j = (pos_x - self.board.x) // settings.TILE_SIZE
+            
+            # Si el usuario hace click y lo mantiene presionnaddo, guardamos la posicion del tile seleccionado y se guarda en las variables "drag_start_i" y "drag_start_j"
+            # Si el title selecciona es valido (es decir que este dentro de las coordenadas del tablero)
 
             if 0 <= i < settings.BOARD_HEIGHT and 0 <= j < settings.BOARD_WIDTH:
+
+                # guardamos sus coodenadas y ponemos el status de draggin como True
+                # para saber si que se esta moviendo
                 self.dragging = True
                 self.drag_start_i = i
                 self.drag_start_j = j
+
+                # Guardamos tambien la posicion en la matriz de nuestro TIle
                 self.dragged_tile = self.board.tiles[i][j]
-                # Inicializar offset en 0
+
+                # Usaremos offset para limitar el movimiento de desplazamiento
                 self.drag_offset_x = 0
                 self.drag_offset_y = 0
 
+        # Si el usuario mantiene presionado el click y lo mueve en alguno de las 4 direcciones ejecuta
         elif (
             input_id
             in [
@@ -169,39 +177,60 @@ class PlayState(BaseState):
             ]
             and self.dragging
         ):
+
+            # Se obtiene la posicion del raton y la convierte en la posicion relativa del tablero
             pos_x, pos_y = input_data.position
             pos_x = pos_x * settings.VIRTUAL_WIDTH // settings.WINDOW_WIDTH
             pos_y = pos_y * settings.VIRTUAL_HEIGHT // settings.WINDOW_HEIGHT
 
+            # Aqui verificamos el tile que se selecciono primero para ser movido
             if self.dragged_tile:
-                # Calcular el offset máximo permitido (un tile de distancia)
+
+                # Ponemos un limite maximo de movimiento
                 max_offset = settings.TILE_SIZE
 
-                # Calcular offsets relativos a la posición original
-                raw_offset_x = (pos_x - settings.TILE_SIZE // 2) - self.dragged_tile.x
-                raw_offset_y = (pos_y - settings.TILE_SIZE // 2) - self.dragged_tile.y
+                # Calculamos el ajuste de trasicion para X del Tile
+                calculate_tile_position_x = pos_x - max_offset // 2
+                raw_offset_x = calculate_tile_position_x - self.dragged_tile.x
 
-                # Limitar los offsets al rango permitido
-                self.drag_offset_x = max(min(raw_offset_x, max_offset), -max_offset)
-                self.drag_offset_y = max(min(raw_offset_y, max_offset), -max_offset)
+                # Calculamos el ajuste de trasicion para Y del Tile
+                calculate_tile_position_y = pos_y - max_offset // 2
+                raw_offset_y = calculate_tile_position_y - self.dragged_tile.y
 
-                # Si ambos offsets son significativos, priorizar el mayor
+                # verificamos el valor minimo entre el offset del xy y la maxima coordenada del Tile
+                minOffset_x = min(raw_offset_x, max_offset)
+                minOffset_y = min(raw_offset_y, max_offset)
+
+                # limitamos los dezplamientos en el rango entre de los offset
+                self.drag_offset_x = max(minOffset_x, -max_offset)
+                self.drag_offset_y = max(minOffset_y, -max_offset)
+
+                # Verificamos si cumple la condicion minima para iniciar el movimiento
                 if (
-                    abs(self.drag_offset_x) > settings.TILE_SIZE * 0.1
-                    and abs(self.drag_offset_y) > settings.TILE_SIZE * 0.1
+                    abs(self.drag_offset_x) > max_offset
+                    and abs(self.drag_offset_y) > max_offset
                 ):
+
+                    # Podemos determinar la direccion dominante de arrastre
+                    # ya que puede mover el tile en x y en Y podemos determinar que coordenada es mayor
+                    # y asi "predecir" si el usuario quiere bajar o subir el tile
                     if abs(self.drag_offset_x) > abs(self.drag_offset_y):
                         self.drag_offset_y = 0
                     else:
                         self.drag_offset_x = 0
 
         elif input_id == "click" and not input_data.pressed and self.dragging:
+
+            # Se obtiene la posicion del raton y la convierte en la posicion relativa del tablero
             pos_x, pos_y = input_data.position
             pos_x = pos_x * settings.VIRTUAL_WIDTH // settings.WINDOW_WIDTH
             pos_y = pos_y * settings.VIRTUAL_HEIGHT // settings.WINDOW_HEIGHT
+
+            # la "i" y "j" sera las posiciones relativas del tablero , se restan con self.board.xy porque self.board.xy es la posicion del tablero en la pantalla
+            # y se divide por el tama;o del tile para obtener la posicion relativa del tile seleccionado, obteniendo asi la posicion "i" y "j" del tile seleccionado
             i = (pos_y - self.board.y) // settings.TILE_SIZE
             j = (pos_x - self.board.x) // settings.TILE_SIZE
-
+            
             if 0 <= i < settings.BOARD_HEIGHT and 0 <= j < settings.BOARD_WIDTH:
                 di = abs(i - self.drag_start_i)
                 dj = abs(j - self.drag_start_j)
@@ -236,11 +265,12 @@ class PlayState(BaseState):
                         on_finish=arrive,
                     )
 
-            # Resetear el estado de arrastre
             self.dragging = False
             self.dragged_tile = None
             self.drag_offset_x = 0
             self.drag_offset_y = 0
+            
+        
 
     def __calculate_matches(self, tiles: List) -> None:
         matches = self.board.calculate_matches_for(tiles)
@@ -309,7 +339,7 @@ class PlayState(BaseState):
 
             def reset_board():
                 print("NOS JODIMOS")
-                #self.timer = 5000
+                # self.timer = 5000
                 self.__initialize_new_board()
                 settings.SOUNDS["next-level"].play()
                 self.active = True

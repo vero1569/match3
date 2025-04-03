@@ -44,9 +44,4 @@ class Tile:
             settings.FRAMES["tiles"][self.color][self.variety],
         )
 
-    def render_at(self, surface: pygame.Surface, x: int, y: int) -> None:
-        surface.blit(
-            settings.TEXTURES["tiles"],
-            (x, y),
-            settings.FRAMES["tiles"][self.color][self.variety],
-        )
+

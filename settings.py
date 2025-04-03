@@ -25,9 +25,7 @@ input_handler.InputHandler.set_keyboard_action(input_handler.KEY_UP, "up")
 input_handler.InputHandler.set_keyboard_action(input_handler.KEY_DOWN, "down")
 input_handler.InputHandler.set_mouse_click_action(input_handler.MOUSE_BUTTON_1, "click")
 
-
-#input_handler.InputHandler.set_mouse_click_action(input_handler.MOUSE_BUTTON_1, "mouse_down")
-#input_handler.InputHandler.set_mouse_release_action(input_handler.MOUSE_BUTTON_1, "mouse_up")
+# New action for mouse motion , can detect 4 directions of the mouse
 input_handler.InputHandler.set_mouse_motion_action(input_handler.MOUSE_MOTION_LEFT,"mouse_motion_left")
 input_handler.InputHandler.set_mouse_motion_action(input_handler.MOUSE_MOTION_RIGHT,"mouse_motion_right")
 input_handler.InputHandler.set_mouse_motion_action(input_handler.MOUSE_MOTION_UP,"mouse_motion_up")
