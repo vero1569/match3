@@ -133,7 +133,7 @@ class PlayState(BaseState):
         )
 
     def on_input(self, input_id: str, input_data: InputData) -> None:
-        
+        # Si el tablero no esta activo no puede moverse nada
         if not self.active:
             return
         
@@ -372,7 +372,6 @@ class PlayState(BaseState):
         # Funcion privada para verificar si hay movimientos validos en el tablero y reiniciar el tablero
         if not self.board.verify_posible_match():
             def board_reset():
-                # self.timer = 5000
                 # Metodo que reinicia el tablero e inicializa uno nuevo
                 print("NO HAY MOVIMIENTOS")
                 self.__create_new_board()
