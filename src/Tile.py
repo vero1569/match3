@@ -32,6 +32,7 @@ class Tile:
 
     def render(self, surface: pygame.Surface, offset_x: int, offset_y: int) -> None:
 
+        # Peque;a validacion para que si el tile es un powerup parpapdee
         if self.is_powerup:
             current_time = pygame.time.get_ticks()
             if current_time - self.blink_timer >= 250:
