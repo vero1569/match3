@@ -25,6 +25,7 @@ class Board:
         self.matches: List[List[Tile]] = []
         self.tiles: List[List[Tile]] = []
         self.initialize_tiles()
+        self.powerup_data: Optional[Tuple[int, int, int, bool]] = None
 
     def render(self, surface: pygame.Surface) -> None:
         for row in self.tiles:
@@ -143,7 +144,32 @@ class Board:
             match = self.__calculate_match_rec(tile)
             if len(match) > 0:
                 self.matches.append(match)
+                if not any(tile.is_powerup for tile in match):
+                    if len(match) == 4:
+        
+                        last_tile = match[
+                            -1
+                        ]  
+                        print("i:", last_tile.i, ",j:", last_tile.j)
+                        self.powerup_data = (
+                            last_tile.i,
+                            last_tile.j,
+                            last_tile.color,
+                            False,
+                        )
 
+                    if len(match) >= 5:
+                
+                        last_tile = match[
+                            -1
+                        ]  
+                        print("i:", last_tile.i, ",j:", last_tile.j)
+                        self.powerup_data = (
+                            last_tile.i,
+                            last_tile.j,
+                            last_tile.color,
+                            True,
+                        )
         delattr(self, "in_match")
         delattr(self, "in_stack")
 
@@ -152,7 +178,16 @@ class Board:
     def remove_matches(self) -> None:
         for match in self.matches:
             for tile in match:
-                self.tiles[tile.i][tile.j] = None
+                if (
+                    self.powerup_data is not None
+                    and self.powerup_data[0] == tile.i
+                    and self.powerup_data[1] == tile.j
+                ):
+                    tile.is_powerup = True
+                    print("Asigne un poder", tile.i, tile.j)
+                    continue
+                else:
+                    self.tiles[tile.i][tile.j] = None
 
         self.matches = []
 
@@ -209,77 +244,131 @@ class Board:
 
         return tweens
 
-    def check_potential_match(self,i: int, j: int, color: int) -> bool:
+    def __check_potential_match(self, i: int, j: int, color: int) -> bool:
 
+        # Posicion en la que se encuentra el tile en la matriz de la columna
+
+        # validaciones para las columnas
         if j < settings.BOARD_WIDTH - 2:
-            if (self.tiles[i][j + 1].color == color and 
-                self.tiles[i][j + 2].color == color):
+            # Verificacion los tiles a la derecha de la matriz
+            if self.__verify_position_in_matrix(i, j + 1, i, j + 2, color):
                 return True
-            
         if j > 1:
-            if (self.tiles[i][j - 1].color == color and 
-                self.tiles[i][j - 2].color == color):
+            # Verificacion los tiles a la izquierda de la matriz
+            if self.__verify_position_in_matrix(i, j - 1, i, j - 2, color):
                 return True
-            
         if 0 < j < settings.BOARD_WIDTH - 1:
-            if (self.tiles[i][j - 1].color == color and 
-                self.tiles[i][j + 1].color == color):
+            # Verificacion los tiles a los lados del tile
+            if self.__verify_position_in_matrix(i, j + 1, i, j - 1, color):
                 return True
 
+        # validaciones para las filas
         if i < settings.BOARD_HEIGHT - 2:
-            if (self.tiles[i + 1][j].color == color and 
-                self.tiles[i + 2][j].color == color):
+            # Verificacion los tiles a la abajo de la matriz
+            if self.__verify_position_in_matrix(i + 1, j, i + 2, j, color):
                 return True
         if i > 1:
-            if (self.tiles[i - 1][j].color == color and 
-                self.tiles[i - 2][j].color == color):
+            # Verificacion los tiles a la arriba de la matriz
+            if self.__verify_position_in_matrix(i - 1, j, i - 2, j, color):
                 return True
-            
         if 0 < i < settings.BOARD_HEIGHT - 1:
-            if (self.tiles[i - 1][j].color == color and 
-                self.tiles[i + 1][j].color == color):
+            # Verificacion los tiles a los lados del tile
+            if self.__verify_position_in_matrix(i - 1, j, i + 1, j, color):
                 return True
 
         return False
-    
+
+    def __verify_position_in_matrix(
+        self,
+        positionfile1: int,
+        positioncolumn1: int,
+        positionfile2: int,
+        positioncolumn2: int,
+        color: int,
+    ):
+        if (
+            self.tiles[positionfile1][positioncolumn1].color == color
+            and self.tiles[positionfile2][positioncolumn2].color == color
+        ):
+            return True
+        return False
+
     def verify_posible_match(self) -> bool:
+
+        # Verificar si hay tablero para que no reinicie el tablero
+        for i in range(settings.BOARD_HEIGHT):
+            for j in range(settings.BOARD_HEIGHT):
+                if self.tiles[i][j].is_powerup:
+                    return True
+        # Verificacion de posibles matches en el tablero
         for i in range(settings.BOARD_HEIGHT):
             for j in range(settings.BOARD_WIDTH - 1):
-        
+
                 color1 = self.tiles[i][j].color
                 color2 = self.tiles[i][j + 1].color
-                
+
                 self.tiles[i][j].color = color2
                 self.tiles[i][j + 1].color = color1
-                
-                if (self.check_potential_match(i, j, color2) or 
-                    self.check_potential_match(i, j + 1, color1)):
-                  
+
+                if self.__check_potential_match(
+                    i, j, color2
+                ) or self.__check_potential_match(i, j + 1, color1):
+
                     self.tiles[i][j].color = color1
                     self.tiles[i][j + 1].color = color2
                     return True
-          
+
                 self.tiles[i][j].color = color1
                 self.tiles[i][j + 1].color = color2
 
         for i in range(settings.BOARD_HEIGHT - 1):
             for j in range(settings.BOARD_WIDTH):
-     
+
                 color1 = self.tiles[i][j].color
                 color2 = self.tiles[i + 1][j].color
-                
+
                 self.tiles[i][j].color = color2
                 self.tiles[i + 1][j].color = color1
-                
-                if (self.check_potential_match(i, j, color2) or 
-                    self.check_potential_match(i + 1, j, color1)):
+
+                if self.__check_potential_match(
+                    i, j, color2
+                ) or self.__check_potential_match(i + 1, j, color1):
 
                     self.tiles[i][j].color = color1
                     self.tiles[i + 1][j].color = color2
                     return True
-                
+
                 self.tiles[i][j].color = color1
                 self.tiles[i + 1][j].color = color2
 
         return False
-    
+
+    def activar_potenciador(self, tile: Tile) -> List[Tile]:
+        afectados = [self.tiles[self.powerup_data[0]][self.powerup_data[1]]]
+        power_tile = self.tiles[self.powerup_data[0]][self.powerup_data[1]]
+        afectados = []  
+
+        print("Activando potenciador")
+
+        if self.powerup_data[3]:
+            for j in range(settings.BOARD_WIDTH):
+                for i in range(settings.BOARD_HEIGHT):
+                    if self.tiles[i][j].color == self.powerup_data[2]:
+                        afectados.append(self.tiles[i][j])
+
+        else:
+            # Horizontal
+            for j in range(settings.BOARD_WIDTH):
+                if self.tiles[tile.i][j] is not None:
+                    afectados.append(self.tiles[tile.i][j])
+
+            # Vertical
+            for i in range(settings.BOARD_HEIGHT):
+                if self.tiles[i][tile.j] is not None and i != tile.i:
+                    afectados.append(self.tiles[i][tile.j])
+   
+        afectados.append(power_tile)
+
+        self.powerup_data = None
+
+        return afectados
