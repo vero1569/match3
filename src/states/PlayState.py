@@ -297,56 +297,56 @@ class PlayState(BaseState):
     def __calculate_matches(self, tiles: List) -> None:
         matches = self.board.calculate_matches_for(tiles)
 
-        # if matches is None:
-        #     # Como este calculo de matchs funciona para ambos casos cuando verificamos matchs y cuando caen los tiles
-        #     # La lista de tiles sera dinamica , pero cuando no hay match por motivo de que son 2 esto nos indica 
-        #     # que valida cuando dos tiles se intercambian
+        if matches is None:
+            # Como este calculo de matchs funciona para ambos casos cuando verificamos matchs y cuando caen los tiles
+            # La lista de tiles sera dinamica , pero cuando no hay match por motivo de que son 2 esto nos indica 
+            # que valida cuando dos tiles se intercambian
 
-        #     # Validacion de match de cuando intermabiamos dos tiles y si no hay match los devolvemos
-        #     if len(tiles) == 2:
-        #         tile1, tile2 = tiles
+            # Validacion de match de cuando intermabiamos dos tiles y si no hay match los devolvemos
+            if len(tiles) == 2:
+                tile1, tile2 = tiles
 
-        #         def revert_finish():
-        #             (
-        #                 self.board.tiles[tile1.i][tile1.j],
-        #                 self.board.tiles[tile2.i][tile2.j],
-        #             ) = (
-        #                 self.board.tiles[tile2.i][tile2.j],
-        #                 self.board.tiles[tile1.i][tile1.j],
-        #             )
-        #             tile1.i, tile1.j, tile2.i, tile2.j = (
-        #                 tile2.i,
-        #                 tile2.j,
-        #                 tile1.i,
-        #                 tile1.j,
-        #             )
-        #             settings.SOUNDS["error"].play()
-        #             self.active = True
-        #             self.__check_board_state()
+                def revert_finish():
+                    (
+                        self.board.tiles[tile1.i][tile1.j],
+                        self.board.tiles[tile2.i][tile2.j],
+                    ) = (
+                        self.board.tiles[tile2.i][tile2.j],
+                        self.board.tiles[tile1.i][tile1.j],
+                    )
+                    tile1.i, tile1.j, tile2.i, tile2.j = (
+                        tile2.i,
+                        tile2.j,
+                        tile1.i,
+                        tile1.j,
+                    )
+                    settings.SOUNDS["error"].play()
+                    self.active = True
+                    self.__check_board_state()
 
-        #         Timer.tween(
-        #             0.25,
-        #             [
-        #                 (tile1, {"x": tile2.x, "y": tile2.y}),
-        #                 (tile2, {"x": tile1.x, "y": tile1.y}),
-        #             ],
-        #             on_finish=lambda: Timer.tween(
-        #                 0.25,
-        #                 [
-        #                     (tile1, {"x": tile1.x, "y": tile1.y}),
-        #                     (tile2, {"x": tile2.x, "y": tile2.y}),
-        #                 ],
-        #                 on_finish=revert_finish,
-        #             ),
-        #         )
-        #     else:
-        #         # De lo contrarios si no se detecta match reinicia el tablero
-        #         self.active = True
-        #         self.__check_board_state()
-        #     return
+                Timer.tween(
+                    0.25,
+                    [
+                        (tile1, {"x": tile2.x, "y": tile2.y}),
+                        (tile2, {"x": tile1.x, "y": tile1.y}),
+                    ],
+                    on_finish=lambda: Timer.tween(
+                        0.25,
+                        [
+                            (tile1, {"x": tile1.x, "y": tile1.y}),
+                            (tile2, {"x": tile2.x, "y": tile2.y}),
+                        ],
+                        on_finish=revert_finish,
+                    ),
+                )
+            else:
+                # De lo contrarios si no se detecta match reinicia el tablero
+                self.active = True
+                self.__check_board_state()
+            return
 
-        self.active = True
-        self.__check_board_state()
+        # self.active = True
+        # self.__check_board_state()
 
         settings.SOUNDS["match"].stop()
         settings.SOUNDS["match"].play()
